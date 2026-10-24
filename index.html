@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المحقق الرقمي - منصة تحديات الأمن السيبراني</title>
+    <style>
+        :root {
+            --bg-color: #0F172A;
+            --card-bg: #1E293B;
+            --border-color: #334155;
+            --accent-blue: #38BDF8;
+            --accent-yellow: #FACC15;
+            --accent-green: #22C55E;
+            --accent-red: #EF4444;
+            --text-main: #F8FAFC;
+            --text-sub: #94A3B8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 15px; }
+        .app-container { width: 100%; max-width: 480px; background-color: var(--bg-color); border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
+        .header { padding: 20px; background-color: var(--card-bg); border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; text-align: center; }
+        .app-title { font-size: 22px; font-weight: bold; color: var(--accent-blue); margin-bottom: 4px; }
+        .subtitle { font-size: 12px; color: var(--text-sub); }
+        .score-card { display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-color); padding: 12px 16px; border-radius: 14px; margin-top: 14px; border: 1px solid var(--border-color); }
+        .score-value { color: var(--accent-yellow); font-size: 18px; font-weight: bold; }
+        .badge-text { color: var(--accent-blue); font-weight: bold; font-size: 12px; }
+        .content { padding: 16px; }
+        .card { display: flex; background-color: var(--card-bg); border-radius: 14px; padding: 14px; margin-bottom: 12px; align-items: center; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; }
+        .card:hover { border-color: var(--accent-blue); }
+        .card-done { border-color: var(--accent-green); background-color: rgba(6, 78, 59, 0.2); }
+        .card-icon { font-size: 24px; margin-left: 12px; }
+        .card-info { flex: 1; text-align: right; }
+        .card-title { font-size: 14px; font-weight: bold; color: var(--text-main); }
+        .card-points { font-size: 11px; color: var(--accent-blue); font-weight: bold; margin-top: 4px; }
+        .cert-button { background-color: var(--accent-green); color: white; border: none; width: 100%; padding: 14px; border-radius: 14px; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 10px; }
+        .cert-button.disabled { background-color: var(--border-color); color: var(--text-sub); cursor: not-allowed; }
+        .quiz-box { background-color: var(--card-bg); padding: 16px; border-radius: 14px; border: 1px solid var(--border-color); margin-bottom: 14px; text-align: right; }
+        .quiz-title { color: var(--accent-blue); font-size: 16px; font-weight: bold; margin-bottom: 12px; text-align: right; }
+        .quiz-text { font-size: 14px; line-height: 20px; color: var(--text-main); }
+        .row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 13px; color: white; cursor: pointer; }
+        .btn-red { background-color: var(--accent-red); }
+        .btn-green { background-color: var(--accent-green); }
+        .option-btn { width: 100%; background-color: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 12px; border-radius: 10px; text-align: right; font-size: 13px; margin-bottom: 8px; cursor: pointer; }
+        .option-btn:hover { border-color: var(--accent-blue); }
+        .feedback-box { background-color: var(--card-bg); padding: 14px; border-radius: 12px; border: 1px solid var(--accent-blue); margin-top: 10px; text-align: right; }
+        .feedback-text { font-size: 12px; line-height: 18px; margin-bottom: 10px; }
+        .next-btn { background-color: var(--accent-blue); color: var(--bg-color); border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .certificate-view { text-align: center; padding: 10px; }
+        .certificate-card { background-color: var(--card-bg); border: 2px solid var(--accent-yellow); padding: 20px; border-radius: 20px; text-align: center; }
+        .cert-icon-large { font-size: 36px; margin-bottom: 8px; }
+        .cert-name { color: var(--accent-blue); font-size: 18px; font-weight: bold; margin: 10px 0; }
+        .back-btn { background-color: var(--accent-blue); color: var(--bg-color); border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        @media print { body { background: white; } .app-container { border: none; box-shadow: none; max-width: 100%; } .no-print { display: none; } }
+    </style>
+</head>
+<body>
+
+<div class="app-container" id="app">
+    <!-- المحتوى يتم تحديثه تلقائياً عبر الجافاسكريبت -->
+</div>
+
+<script>
+    let score = 0;
+    let completed = [];
+    let activeChallenge = null;
+    let currentIndex = 0;
+    let feedback = '';
+    let showCert = false;
+
+    const data = {
+        1: [
+            { q: 'تم تجميد حسابك! حدث بياناتك عبر الرابط: http://bit.ly/bank-sec', ans: true, exp: 'احذر! البنوك الرسمية لا تطلب تحديث البيانات عبر روابط مختزلة.' },
+            { q: 'شحنتك وصلت الفرع. تابع التفاصيل من تطبيق سبل الرسمي.', ans: false, exp: 'صحيح! الرسالة آمنة وتوجهك للتطبيق الرسمي.' },
+            { q: 'مبروك ربحت 500 ريال! اضغط هنا لاستلام جائزتك: http://stc-prize.com', ans: true, exp: 'احذر! محاولة تصيد وهمية لسرقة معلوماتك.' }
+        ],
+        2: [
+            { q: 'كلمة المرور: 123456', ans: false, exp: 'كلمات المرور المكونة من أرقام متسلسلة ضعيفة جداً.' },
+            { q: 'كلمة المرور: P$9#mK!2vL', ans: true, exp: 'ممتاز! كلمة مرور قوية جداً ومشفرة.' },
+            { q: 'كلمة المرور: password123', ans: false, exp: 'ضعيفة لأنها تحتوي على كلمات شائعة.' }
+        ],
+        3: [
+            { q: 'https://www.absher.sa/portal/landing.M', ans: true, exp: 'رابط آمن وصحيح لمنصة أبشر الحكومية.' },
+            { q: 'http://login-apple-support.com/update', ans: false, exp: 'رابط مشبوه يقلد شركة آبل لسرقة البيانات.' },
+            { q: 'https://www.google.com', ans: true, exp: 'رابط آمن ورسمي لموتور البحث جوجل.' }
+        ],
+        4: [
+            { q: 'ما هي الطريقة الأفضل لحماية حساباتك من الاختراق؟', opts: ['نفس كلمة المرور', 'التحقق الثنائي (2FA)', 'حفظها بورقة'], correct: 1, exp: 'التحقق الثنائي يضيف طبقة حماية ثانية أساسية.' },
+            { q: 'ماذا تعني الحروف HTTPS في بداية الروابط؟', opts: ['موقع بطيء', 'اتصال آمن ومشفر', 'موقع حكومي'], correct: 1, exp: 'تعني أن تبادل البيانات بينك وبين الموقع مشفر وآمن.' },
+            { q: 'لماذا يُنصح بعدم استخدام نفس كلمة المرور؟', opts: ['لتطيل الصفحة', 'لتجنب الاختراق الشامل إذا سُرقت', 'تنظيم شخصي'], correct: 1, exp: 'يمنع المخترقين من الوصول لبقية حساباتك في حال تسريب إحداها.' }
+        ]
+    };
+
+    function render() {
+        const app = document.getElementById('app');
+        
+        if (showCert) {
+            app.innerHTML = `
+                <div class="content certificate-view">
+                    <div class="certificate-card">
+                        <div class="cert-icon-large">🎓</div>
+                        <h2 style="color: var(--accent-yellow); font-size: 20px; margin-bottom: 6px;">شهادة إنجاز رسمية</h2>
+                        <p style="color: var(--text-sub); font-size: 12px;">تمنح هذه الشهادة إلى:</p>
+                        <div class="cert-name">محققة رقمية معتمدة</div>
+                        <p style="font-size: 13px; line-height: 20px; margin-bottom: 15px;">لاجتيازها بنجاح تام كافة تحديات الأمن السيبراني ومنصة المحقق الرقمي بمجموع نقاط 100/100.</p>
+                        <button class="next-button no-print" onclick="window.print()" style="background-color: var(--accent-green); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px; width: 100%;">🖨️ طباعة أو حفظ الشهادة PDF</button>
+                        <button class="back-btn no-print" onclick="showCert = false; render();">العودة للرئيسية ⬅️</button>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <div class="header">
+                <div class="app-title">🕵️‍♂️ المحقق الرقمي</div>
+                <div class="subtitle">منصة تحديات الأمن السيبراني التفاعلية</div>
+                <div class="score-card">
+                    <div class="score-value">${score} / 100</div>
+                    <div class="badge-text">${score === 100 ? "🏆 محقق محترف" : "🔍 محقق متدرب"}</div>
+                </div>
+            </div>
+            <div class="content">
+        `;
+
+        if (activeChallenge !== null) {
+            const currentQ = data[activeChallenge][currentIndex];
+            html += `
+                <div class="quiz-title">السؤال ${currentIndex + 1} من 3</div>
+                <div class="quiz-box">
+                    <div class="quiz-text">${currentQ.q || currentQ.puzzle}</div>
+                </div>
+            `;
+
+            if (activeChallenge !== 4) {
+                html += `
+                    <div class="row">
+                        <button class="btn btn-red" onclick="handleAns(${activeChallenge === 2 ? false : true})" ${feedback ? 'disabled' : ''}>${activeChallenge === 2 ? '❌ ضعيفة' : '🚨 مشبوه'}</button>
+                        <button class="btn btn-green" onclick="handleAns(${activeChallenge === 2 ? true : false})" ${feedback ? 'disabled' : ''}>${activeChallenge === 2 ? '✅ قوية' : '✅ آمنة'}</button>
+                    </div>
+                `;
+            } else {
+                currentQ.opts.forEach((opt, idx) => {
+                    html += `<button class="option-btn" onclick="handlePuzzle(${idx})" ${feedback ? 'disabled' : ''}>${opt}</button>`;
+                });
+            }
+
+            if (feedback) {
+                html += `
+                    <div class="feedback-box">
+                        <div class="feedback-text">${feedback}</div>
+                        <button class="next-btn" onclick="nextStep()">التالي ⬅️</button>
+                    </div>
+                `;
+            }
+        } else {
+            const modules = [
+                { id: 1, title: 'التصيد الاحتيالي', icon: '🎣' },
+                { id: 2, title: 'قوة كلمات المرور', icon: '🔐' },
+                { id: 3, title: 'كشف الروابط المشبوهة', icon: '🌐' },
+                { id: 4, title: 'ألغاز حماية البيانات', icon: '🧩' }
+            ];
+
+            modules.forEach(m => {
+                const isDone = completed.includes(m.id);
+                html += `
+                    <div class="card ${isDone ? 'card-done' : ''}" onclick="startChallenge(${m.id})">
+                        <div class="card-icon">${m.icon}</div>
+                        <div class="card-info">
+                            <div class="card-title">${m.title}</div>
+                            <div class="card-points">+25 نقطة (3 أسئلة)</div>
+                        </div>
+                        <div>${isDone ? '✅' : '◀'}</div>
+                    </div>
+                `;
+            });
+
+            html += `
+                <button class="cert-button ${score < 100 ? 'disabled' : ''}" ${score < 100 ? 'disabled' : ''} onclick="openCert()">
+                    ${score === 100 ? "🎓 استعراض شهادة الإنجاز الرسمية" : "🔒 الشهادة مغلقة (يلزم 100/100)"}
+                </button>
+            `;
+        }
+
+        html += `</div>`;
+        app.innerHTML = html;
+    }
+
+    function startChallenge(id) {
+        if (completed.includes(id)) {
+            alert("لقد أكملت هذا التحدي مسبقاً!");
+            return;
+        }
+        activeChallenge = id;
+        currentIndex = 0;
+        feedback = '';
+        render();
+    }
+
+    function handleAns(userAns) {
+        const currentQ = data[activeChallenge][currentIndex];
+        const correct = userAns === currentQ.ans;
+        feedback = (correct ? '✅ إجابة صحيحة! ' : '❌ إجابة خاطئة! ') + currentQ.exp;
+        render();
+    }
+
+    function handlePuzzle(idx) {
+        const currentQ = data[activeChallenge][currentIndex];
+        const correct = idx === currentQ.correct;
+        feedback = (correct ? '✅ إجابة صحيحة! ' : '❌ إجابة خاطئة! ') + currentQ.exp;
+        render();
+    }
+
+    function nextStep() {
+        feedback = '';
+        if (currentIndex + 1 < data[activeChallenge].length) {
+            currentIndex++;
+        } else {
+            score += 25;
+            completed.push(activeChallenge);
+            activeChallenge = null;
+        }
+        render();
+    }
+
+    function openCert() {
+        if (score === 100) {
+            showCert = true;
+            render();
+        }
+    }
+
+    render();
+</script>
+
+</body>
+</html>
